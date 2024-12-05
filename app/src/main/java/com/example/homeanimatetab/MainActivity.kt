@@ -1,13 +1,17 @@
 package com.example.homeanimatetab
 
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.os.Bundle
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.animation.doOnEnd
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.example.homeanimatetab.databinding.ActivityMainBinding
+import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
 
@@ -31,5 +35,24 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+        binding.fab.setOnClickListener {
+            val animator = ObjectAnimator.ofFloat(
+                binding.fab,
+                "translationY",
+                0f,
+                -binding.fab.height.toFloat() + 30f,
+                0f
+            ).apply {
+                duration = 3000
+                repeatMode = ValueAnimator.REVERSE
+                addUpdateListener {
+                    binding.navView.updateDistance(abs(it.animatedValue as Float))
+                }
+                addListener(doOnEnd {
+
+                })
+            }
+            animator.start()
+        }
     }
 }
