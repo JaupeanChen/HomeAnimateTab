@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.home.HomeFragment">
+    tools:context=".ui.home.HomeFragment"
+    android:background="@color/teal_700">
 
     <com.example.homeanimatetab.ui.ArcView
         android:id="@+id/arc"
@@ -15,8 +16,8 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <com.example.homeanimatetab.ui.TriangularView3
-        android:layout_width="100dp"
-        android:layout_height="230dp"
+        android:layout_width="120dp"
+        android:layout_height="250dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/arc" />

@@ -5,6 +5,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 
 class TriangularView3 @JvmOverloads constructor(
@@ -26,6 +27,7 @@ class TriangularView3 @JvmOverloads constructor(
         style = Paint.Style.STROKE
     }
 
+    private val lineSpacing = 20 // 线间距
     private val trianglePath: Path = Path()
 
     init {
@@ -51,12 +53,20 @@ class TriangularView3 @JvmOverloads constructor(
     }
 
     private fun drawDiagonalLines(canvas: Canvas) {
-        val lineSpacing = 20 // 线间距
-
         for (i in 0..height step lineSpacing) {
+            val targetY = height - i.toFloat()
+            Log.d("TAG", "targetY = $targetY height = $height")
+            val targetX = if (targetY < height / 2) {
+                -(targetY - height / 2) / ((height) / (width * 2)) - lineSpacing
+
+            } else {
+                (targetY - height / 2) / (height / (width * 2)) - lineSpacing
+
+            }
             canvas.drawLine(
-                0f, height - i.toFloat(),
-                width.toFloat(), height - i.toFloat(), linePaint
+                targetX, targetY,
+                width.toFloat(), targetY,
+                linePaint
             )
         }
     }
