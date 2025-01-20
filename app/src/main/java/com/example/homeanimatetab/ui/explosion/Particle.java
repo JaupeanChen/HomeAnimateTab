@@ -35,7 +35,7 @@ public class Particle {
     // 判断粒子是否还活着
     public boolean isAlive() {
         long elapsed = System.currentTimeMillis() - startTime;
-        return elapsed < 2000; // 粒子活1秒
+        return elapsed < 1500; // 粒子存活时间
     }
 }
 
