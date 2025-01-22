@@ -1,9 +1,10 @@
 package com.example.homeanimatetab.ui
 
+import android.animation.Animator
+import android.animation.Animator.AnimatorListener
 import android.animation.ObjectAnimator
 import android.animation.PointFEvaluator
 import android.animation.ValueAnimator
-import android.animation.ValueAnimator.AnimatorUpdateListener
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
@@ -15,6 +16,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.AccelerateInterpolator
 import android.view.animation.OvershootInterpolator
 import androidx.core.graphics.minus
 import com.example.homeanimatetab.ui.explosion.Particle
@@ -42,11 +44,8 @@ class ElasticityDragView @JvmOverloads constructor(
     //范围圆半径
     private val scopeCircleR = 350f
 
-    //小圆圆心
-    private val smallCircleCenter: PointF
-
     //小圆半径
-    private val smallCircleR = 40f
+    private val smallCircleR = 50f
     private var changeSmallCircleR = 60f
 
     //大圆圆心
@@ -57,8 +56,15 @@ class ElasticityDragView @JvmOverloads constructor(
             invalidate()
         }
 
+    //小圆圆心
+    var smallCircleCenter = PointF(0f, 0f)
+        set(value) {
+            field = value
+            invalidate()
+        }
+
     //大圆半径
-    private val bigCircleR = 40f
+    private val bigCircleR = 50f
 
     private val paint = Paint().apply {
         color = Color.LTGRAY
@@ -67,7 +73,8 @@ class ElasticityDragView @JvmOverloads constructor(
 
     private var isDragging = false
 
-    private var inScope = true
+    //拖出区域之后只能爆炸
+    private var outScope = false
 
     private var isExplode = false
 
@@ -108,7 +115,11 @@ class ElasticityDragView @JvmOverloads constructor(
             }
 
             MotionEvent.ACTION_MOVE -> {
-                inScope = inScopeCircle(event)
+//                Log.d("ElasticityDragView", "ACTION_MOVE")
+                if (isDragging && !inScopeCircle(event)) {
+                    outScope = true
+                    smallCircleSlideToBig()
+                }
                 if (isDragging) {
                     Log.d("ElasticityDragView", "isDragging ACTION_MOVE")
                     bigCircleCenter.x = event.x
@@ -119,8 +130,11 @@ class ElasticityDragView @JvmOverloads constructor(
 
             MotionEvent.ACTION_UP -> {
                 Log.d("ElasticityDragView", "ACTION_UP")
-                isDragging = false
-                if (inScope) {
+                if (!isDragging) {
+                    //范围外点击不做处理
+                    return false
+                }
+                if (!outScope) {
                     //回弹
                     animatorBack()
                 } else {
@@ -128,10 +142,19 @@ class ElasticityDragView @JvmOverloads constructor(
                     prepareParticles(event.x, event.y)
                     invalidate()
                 }
+                isDragging = false
             }
         }
         //TODO 这里需要返回true消费事件，才能拖动大圆
         return true
+    }
+
+    private fun smallCircleSlideToBig() {
+        val animator =
+            ObjectAnimator.ofObject(this, "smallCircleCenter", PointFEvaluator(), bigCircleCenter)
+        animator.setDuration(100)
+        animator.interpolator = AccelerateInterpolator()
+        animator.start()
     }
 
     private fun prepareParticles(startX: Float, startY: Float) {
@@ -160,7 +183,27 @@ class ElasticityDragView @JvmOverloads constructor(
             for (particle in particleList) {
                 particle.updateAlpha(value)
             }
+//            if (!it.isRunning) {
+//                //动画结束重置状态
+//                outScope = false
+//            }
         }
+        valueAnimator.addListener(object : AnimatorListener {
+            override fun onAnimationStart(animation: Animator) {
+            }
+
+            override fun onAnimationEnd(animation: Animator) {
+                //动画结束重置状态
+                outScope = false
+            }
+
+            override fun onAnimationCancel(animation: Animator) {
+            }
+
+            override fun onAnimationRepeat(animation: Animator) {
+            }
+
+        })
         valueAnimator.start()
     }
 
@@ -201,13 +244,19 @@ class ElasticityDragView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        paint.color = Color.LTGRAY
-        canvas.drawCircle(scopeCircleCenter.x, scopeCircleCenter.y, scopeCircleR, paint)
+        if (isDragging && !outScope) {
+            paint.color = Color.LTGRAY
+            canvas.drawCircle(scopeCircleCenter.x, scopeCircleCenter.y, scopeCircleR, paint)
+        }
+
         paint.color = Color.BLUE
 
-        if (inScope) {
-            canvas.drawCircle(smallCircleCenter.x, smallCircleCenter.y, changeSmallCircleR, paint)
+        if (isDragging || !outScope) {
             canvas.drawCircle(bigCircleCenter.x, bigCircleCenter.y, bigCircleR, paint)
+        }
+
+        if (!outScope) {
+            canvas.drawCircle(smallCircleCenter.x, smallCircleCenter.y, changeSmallCircleR, paint)
             drawBezier(canvas, changeSmallCircleR, bigCircleR)
         }
 
